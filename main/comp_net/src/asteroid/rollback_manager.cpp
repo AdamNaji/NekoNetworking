@@ -264,13 +264,13 @@ PhysicsState RollbackManager::GetValidatePhysicsState(net::PlayerNumber playerNu
     {
         state += anglePtr[i];
     }
-    //Adding angular Velocity
+   /* Adding angular Velocity
     const auto angularVelocity = playerBody.angularVelocity.value();
     const auto* angularVelPtr = reinterpret_cast<const PhysicsState*>(&angularVelocity);
     for (size_t i = 0; i < sizeof(float) / sizeof(PhysicsState); i++)
     {
         state += angularVelPtr[i];
-    }
+    }*/
     return state;
 }
 
