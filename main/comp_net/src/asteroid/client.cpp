@@ -101,9 +101,20 @@ void Client::ReceivePacket(const asteroid::Packet* packet)
         gameManager_.WinGame(winGamePacket->winner);
         break;
     }
-    case asteroid::PacketType::SPAWN_BULLET: break;
+    case asteroid::PacketType::SPAWN_BULLET: {
+
+        const auto* spawnBulletPacket = static_cast<const asteroid::SpawnBulletPacket*>(packet);
+
+
+        const auto pos = ConvertFromBinary<Vec2f>(spawnBulletPacket->pos);
+        const auto velocity = ConvertFromBinary<Vec2f>(spawnBulletPacket->velocity);
+
+        gameManager_.SpawnBullet(pos, velocity);
+    		
+    	break;
+
+    }
     default:;
     }
-
 }
 }

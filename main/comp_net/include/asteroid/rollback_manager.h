@@ -30,6 +30,7 @@
 #include "player_character.h"
 #include "bullet_manager.h"
 
+
 namespace neko::asteroid
 {
 class GameManager;
@@ -72,7 +73,7 @@ public:
     [[nodiscard]] const Transform2dManager& GetTransformManager() const { return currentTransformManager_; }
     [[nodiscard]] const PlayerCharacterManager& GetPlayerCharacterManager() const { return currentPlayerManager_; }
     void SpawnPlayer(net::PlayerNumber playerNumber, Entity entity, Vec2f position, degree_t rotation);
-    void SpawnBullet(net::PlayerNumber playerNumber, Entity entity, Vec2f position, Vec2f velocity);
+    void SpawnBullet(Entity entity, Vec2f position, Vec2f velocity);
     /**
      * \brief This function does not destroy the entity definitely, but puts the DESTROY flag
      */

@@ -38,11 +38,11 @@ enum class PacketType : std::uint8_t
     JOIN = 0u,
     SPAWN_PLAYER,
     INPUT,
-    SPAWN_BULLET,
     VALIDATE_STATE,
     START_GAME,
     JOIN_ACK,
     WIN_GAME,
+    SPAWN_BULLET,
     NONE,
 };
 
@@ -217,6 +217,7 @@ struct WinGamePacket : TypedPacket<PacketType::WIN_GAME>
     net::PlayerNumber winner = net::INVALID_PLAYER;
 };
 
+
 inline sf::Packet& operator<<(sf::Packet& packet, const WinGamePacket& winGamePacket)
 {
     return packet << winGamePacket.winner;
@@ -225,6 +226,20 @@ inline sf::Packet& operator<<(sf::Packet& packet, const WinGamePacket& winGamePa
 inline sf::Packet& operator>>(sf::Packet& packet, WinGamePacket& winGamePacket)
 {
     return packet >> winGamePacket.winner;
+}
+struct SpawnBulletPacket : TypedPacket<PacketType::SPAWN_BULLET>
+{
+    std::array<std::uint8_t, sizeof(Vec2f)> pos{};
+    std::array<std::uint8_t, sizeof(Vec2f)> velocity{};
+};
+inline sf::Packet& operator<<(sf::Packet& packet, const SpawnBulletPacket& spawnBulletPacket)
+{
+    return packet << spawnBulletPacket.velocity;
+}
+
+inline sf::Packet& operator>>(sf::Packet& packet, SpawnBulletPacket& spawnBulletPacket)
+{
+    return packet >> spawnBulletPacket.velocity;
 }
 
 inline void GeneratePacket(sf::Packet& packet, asteroid::Packet& sendingPacket)
@@ -271,6 +286,12 @@ inline void GeneratePacket(sf::Packet& packet, asteroid::Packet& sendingPacket)
     case PacketType::WIN_GAME:
     {
         auto& packetTmp = static_cast<WinGamePacket&>(sendingPacket);
+        packet << packetTmp;
+        break;
+    }
+    case PacketType::SPAWN_BULLET:
+    {
+        auto& packetTmp = static_cast<SpawnBulletPacket&>(sendingPacket);
         packet << packetTmp;
         break;
     }
@@ -332,6 +353,13 @@ inline std::unique_ptr<Packet> GenerateReceivedPacket(sf::Packet& packet)
         winGamePacket->packetType = packetTmp.packetType;
         packet >> *winGamePacket;
         return winGamePacket;
+    }
+    case PacketType::SPAWN_BULLET:
+    {
+        auto spawnBulletPacket = std::make_unique<SpawnBulletPacket>();
+        spawnBulletPacket->packetType = packetTmp.packetType;
+        packet >> *spawnBulletPacket;
+        return spawnBulletPacket;
     }
     default:;
     }

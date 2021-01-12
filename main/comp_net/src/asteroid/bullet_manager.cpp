@@ -24,12 +24,19 @@
 
 #include "asteroid/bullet_manager.h"
 #include "asteroid/game.h"
+#include "asteroid/game_manager.h"
 
 namespace neko::asteroid
 {
-BulletManager::BulletManager(EntityManager& entityManager, GameManager& gameManager) :
-    ComponentManager(entityManager), gameManager_(gameManager)
+BulletManager::BulletManager(EntityManager& entityManager, GameManager& gameManager, PhysicsManager& physicsManager, PlayerCharacterManager& playerCharacterManager) :
+    ComponentManager(entityManager), gameManager_(gameManager), physicsManager_(physicsManager), playerCharacterManager_(playerCharacterManager)
 {
+}
+BulletManager& BulletManager::operator=(const BulletManager& ballManager)
+{
+    components_ = ballManager.components_;
+    //We do NOT copy the physics manager
+    return *this;
 }
 
 void BulletManager::FixedUpdate(seconds dt)
@@ -39,11 +46,19 @@ void BulletManager::FixedUpdate(seconds dt)
         if(entityManager_.get().HasComponent(entity, EntityMask(ComponentType::BULLET)))
         {
             auto& bullet = components_[entity];
-            bullet.remainingTime -= dt.count();
-            if(bullet.remainingTime < 0.0f)
+            auto bulletBody = physicsManager_.get().GetBody(entity);
+
+        	if(bulletBody.position.y >playerPosMax || bulletBody.position.y< playerPosMin)
+        	{
+                bulletBody.velocity = Vec2f(bulletBody.velocity.x, -bulletBody.velocity.y);
+                physicsManager_.get().SetBody(entity, bulletBody);
+        	}
+            if (bulletBody.position.x > bulletMaxPosX || bulletBody.position.x < -bulletMaxPosX)
             {
-                entityManager_.get().DestroyEntity(entity);
+                bulletBody.velocity = Vec2f(-bulletBody.velocity.x, bulletBody.velocity.y);
+                physicsManager_.get().SetBody(entity, bulletBody);
             }
+          
         }
     }
 }

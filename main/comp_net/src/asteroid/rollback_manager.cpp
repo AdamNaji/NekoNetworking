@@ -37,9 +37,11 @@ RollbackManager::RollbackManager(GameManager& gameManager, EntityManager& entity
     gameManager_(gameManager), entityManager_(entityManager),
     currentTransformManager_(entityManager),
     currentPhysicsManager_(entityManager), currentPlayerManager_(entityManager, currentPhysicsManager_, gameManager_),
-    currentBulletManager_(entityManager, gameManager),
+    currentBulletManager_(entityManager, gameManager, currentPhysicsManager_, currentPlayerManager_),
     lastValidatePhysicsManager_(entityManager),
-    lastValidatePlayerManager_(entityManager, lastValidatePhysicsManager_, gameManager_), lastValidateBulletManager_(entityManager, gameManager)
+    lastValidatePlayerManager_(entityManager, lastValidatePhysicsManager_, gameManager_),
+	lastValidateBulletManager_(entityManager, gameManager ,lastValidatePhysicsManager_,lastValidatePlayerManager_)
+
 {
     for (auto& input : inputs_)
     {
@@ -280,7 +282,8 @@ void RollbackManager::SpawnPlayer(net::PlayerNumber playerNumber, Entity entity,
     playerBody.position = position;
     playerBody.rotation = rotation;
     Box playerBox;
-    playerBox.extends = Vec2f::one * 0.5f;
+    Vec2f playerScale(playerScaleX, playerScaleY);
+    playerBox.extends = Vec2f::one * 0.5f*playerScale;
 
     PlayerCharacter playerCharacter;
     playerCharacter.playerNumber = playerNumber;
@@ -304,6 +307,9 @@ void RollbackManager::SpawnPlayer(net::PlayerNumber playerNumber, Entity entity,
     currentTransformManager_.AddComponent(entity);
     currentTransformManager_.SetPosition(entity, position);
     currentTransformManager_.SetRotation(entity, rotation);
+    currentTransformManager_.SetScale(entity, Vec2f(playerScaleX, playerScaleY));
+
+
 }
 
 net::PlayerInput RollbackManager::GetInputAtFrame(net::PlayerNumber playerNumber, net::Frame frame)
@@ -326,11 +332,13 @@ void RollbackManager::OnCollision(Entity entity1, Entity entity2)
             if (playerCharacter.invincibilityTime <= 0.0f)
             {
                 playerCharacter.health--;
-                playerCharacter.invincibilityTime = playerInvincibilityPeriod;
+                playerCharacter.invincibilityTime = playerInvincibilityPeriod;          	
             }
             currentPlayerManager_.SetComponent(playerEntity, playerCharacter);
+			
         }
     };
+	
     if (entityManager_.HasComponent(entity1, EntityMask(ComponentType::PLAYER_CHARACTER)) &&
         entityManager_.HasComponent(entity2, EntityMask(ComponentType::BULLET)))
     {
@@ -348,7 +356,7 @@ void RollbackManager::OnCollision(Entity entity1, Entity entity2)
     }
 }
 
-void RollbackManager::SpawnBullet(net::PlayerNumber playerNumber, Entity entity, Vec2f position, Vec2f velocity)
+void RollbackManager::SpawnBullet(Entity entity, Vec2f position, Vec2f velocity)
 {
     createdEntities_.push_back({ entity, testedFrame_ });
 
@@ -359,13 +367,17 @@ void RollbackManager::SpawnBullet(net::PlayerNumber playerNumber, Entity entity,
     bulletBox.extends = Vec2f::one * bulletScale * 0.5f;
 
     currentBulletManager_.AddComponent(entity);
-    currentBulletManager_.SetComponent(entity, { bulletPeriod, playerNumber });
 
     currentPhysicsManager_.AddBody(entity);
     currentPhysicsManager_.SetBody(entity, bulletBody);
     currentPhysicsManager_.AddBox(entity);
     currentPhysicsManager_.SetBox(entity, bulletBox);
 
+    lastValidatePhysicsManager_.AddBody(entity);
+    lastValidatePhysicsManager_.SetBody(entity, bulletBody);
+    lastValidatePhysicsManager_.AddBox(entity);
+    lastValidatePhysicsManager_.SetBox(entity, bulletBox);
+	
     currentTransformManager_.AddComponent(entity);
     currentTransformManager_.SetPosition(entity, position);
     currentTransformManager_.SetScale(entity, Vec2f::one * bulletScale);

@@ -82,7 +82,33 @@ void PhysicsManager::FixedUpdate(seconds dt)
                 box2.extends.x * 2.0f,
                 box2.extends.y * 2.0f))
             {
-                onCollisionAction_.Execute(entity, otherEntity);
+                onCollisionAction_.Execute(entity, otherEntity); std::pair<Entity, Entity> pair(entity, otherEntity);
+                bool isOnCollision = false;
+
+                for (int i = 0; i < collisionDetection_.size(); i++)
+                {
+                    if (std::pair<Entity, Entity>(entity, otherEntity) == collisionDetection_[i] || std::pair<Entity, Entity>(otherEntity, entity) == collisionDetection_[i])
+                    {
+                        isOnCollision = true;
+                        break;
+                    }
+                }
+                if (!isOnCollision)
+                {
+                    collisionDetection_.push_back(pair);
+                    onCollisionAction_.Execute(entity, otherEntity);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < collisionDetection_.size(); i++)
+                {
+                    if (std::pair<Entity, Entity>(entity, otherEntity) == collisionDetection_[i] || std::pair<Entity, Entity>(otherEntity, entity) == collisionDetection_[i])
+                    {
+                        collisionDetection_.erase(collisionDetection_.begin() + i);
+                    }
+                }
+            
             }
 
         }

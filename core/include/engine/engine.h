@@ -44,8 +44,8 @@ class Window;
 struct Configuration
 {
 	std::string windowName = "NekoEngine 0.1";
-    Vec2u windowSize = Vec2u(1280, 720);
-    Vec2u gameWindowSize{1280, 720};
+    Vec2u windowSize = Vec2u(1280, 1024);
+    Vec2u gameWindowSize{1280, 700};
     bool fullscreen = false;
     bool vSync = true;
     unsigned int framerateLimit = 0u;

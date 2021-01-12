@@ -64,9 +64,13 @@ void GameManager::SpawnPlayer(net::PlayerNumber playerNumber, Vec2f position, de
     entityMap_[playerNumber] = entity;
     entityManager_.AddComponentType(entity, static_cast<EntityMask>(ComponentType::PLAYER_CHARACTER));
     transformManager_.AddComponent(entity);
+    transformManager_.SetScale(entity, Vec2f(playerScaleX, playerScaleY));
     transformManager_.SetPosition(entity, position);
     transformManager_.SetRotation(entity, rotation);
+	transformManager_.SetScale(entity, Vec2f(playerScaleX, playerScaleY));
+
     rollbackManager_.SpawnPlayer(playerNumber, entity, position, degree_t(rotation));
+
 }
 
 Entity GameManager::GetEntityFromPlayerNumber(net::PlayerNumber playerNumber) const
@@ -95,7 +99,7 @@ void GameManager::Validate(net::Frame newValidateFrame)
     rollbackManager_.ValidateFrame(newValidateFrame);
 }
 
-Entity GameManager::SpawnBullet(net::PlayerNumber playerNumber, Vec2f position, Vec2f velocity)
+Entity GameManager::SpawnBullet(Vec2f position, Vec2f velocity)
 {
     const Entity entity = entityManager_.CreateEntity();
     entityManager_.AddComponentType(entity, static_cast<EntityMask>(ComponentType::BULLET));
@@ -104,13 +108,13 @@ Entity GameManager::SpawnBullet(net::PlayerNumber playerNumber, Vec2f position, 
     transformManager_.SetScale(entity, Vec2f::one * bulletScale);
     transformManager_.SetRotation(entity, degree_t(0.0f));
     transformManager_.UpdateDirtyComponent(entity);
-    rollbackManager_.SpawnBullet(playerNumber, entity, position, velocity);
+    rollbackManager_.SpawnBullet(entity, position, velocity);
     return entity;
 }
 
 void GameManager::DestroyBullet(Entity entity)
 {
-    rollbackManager_.DestroyEntity(entity);
+  //  rollbackManager_.DestroyEntity(entity);
 }
 
 net::PlayerNumber GameManager::CheckWinner() const
@@ -127,8 +131,15 @@ net::PlayerNumber GameManager::CheckWinner() const
         {
             alivePlayer++;
             winner = player.playerNumber;
+    
         }
     }
+    logDebug(std::to_string(alivePlayer));
+	if(alivePlayer ==1 )
+	{
+        logDebug(std::to_string(winner));
+
+	}
 
     return alivePlayer == 1 ? winner : net::INVALID_PLAYER;
 }
@@ -309,11 +320,12 @@ void ClientGameManager::SpawnPlayer(net::PlayerNumber playerNumber, Vec2f positi
     sprite.color = playerColors[playerNumber];
     spriteManager_.SetComponent(entity, sprite);
 
+
 }
 
-Entity ClientGameManager::SpawnBullet(net::PlayerNumber playerNumber, Vec2f position, Vec2f velocity)
+Entity ClientGameManager::SpawnBullet(Vec2f position, Vec2f velocity)
 {
-    const auto entity = GameManager::SpawnBullet(playerNumber, position, velocity);
+    const auto entity = GameManager::SpawnBullet(position, velocity);
     const auto& config = BasicEngine::GetInstance()->config;
     if (bulletTextureId_ == INVALID_TEXTURE_ID)
     {
@@ -322,8 +334,8 @@ Entity ClientGameManager::SpawnBullet(net::PlayerNumber playerNumber, Vec2f posi
     spriteManager_.AddComponent(entity);
     spriteManager_.SetTexture(entity, bulletTextureId_);
     auto sprite = spriteManager_.GetComponent(entity);
-    sprite.color = playerColors[playerNumber];
     spriteManager_.SetComponent(entity, sprite);
+    rollbackManager_.SpawnBullet(entity, position, velocity);
     return entity;
 }
 

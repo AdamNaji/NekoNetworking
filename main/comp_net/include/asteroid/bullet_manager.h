@@ -26,21 +26,27 @@
 #include "game.h"
 #include "engine/component.h"
 #include "comp_net/type.h"
+#include "asteroid/physics_manager.h"
+#include "asteroid/player_character.h"
 
 namespace neko::asteroid
 {
 struct Bullet
 {
     float remainingTime = 0.0f;
+	
     net::PlayerNumber playerNumber = net::INVALID_PLAYER;
 };
 class GameManager;
 class BulletManager : public ComponentManager<Bullet, static_cast<EntityMask>(ComponentType::BULLET)>
 {
 public:
-    explicit BulletManager(EntityManager& entityManager, GameManager& gameManager);
-    void FixedUpdate(seconds dt);
-private:
+    explicit BulletManager(EntityManager& entityManager, GameManager& gameManager, PhysicsManager& physicsManager, PlayerCharacterManager& playerCharacterManager);
+	void FixedUpdate(seconds dt);
+    BulletManager& operator= (const BulletManager&);
+	private:
     std::reference_wrapper<GameManager> gameManager_;
+    std::reference_wrapper<PhysicsManager> physicsManager_;
+    std::reference_wrapper<PlayerCharacterManager> playerCharacterManager_;
 };
 }
